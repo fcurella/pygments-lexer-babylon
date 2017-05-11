@@ -1,4 +1,5 @@
 # from subprocess import check_output, STDOUT, CalledProcessError
+import logging
 import subprocess
 import os
 import json
@@ -8,6 +9,9 @@ from pygments.lexer import Lexer, bygroups, using
 from pygments.lexers.html import HtmlLexer
 from pygments.token import (Text, Comment, String, Keyword, Name,
                             Number, Punctuation, Error, Operator)
+
+
+logger = logging.getLogger(__name__)
 
 
 RESERVED_WORDS = (
@@ -131,11 +135,14 @@ class BabylonLexer(Lexer):
                                   stdout=subprocess.PIPE,
                                   stderr=subprocess.PIPE)
         except OSError:
-            raise OSError(
+            logger.error(
                 'Node.js could not run. Make sure it is '
                 'installed and is available as command `%s`. '
                 '(You may need to set the `PYGMENTS_NODE_COMMAND` '
-                'environment variable to run Node.)' % nodecmd[0])
+                'environment variable to run Node.)' % nodecmd[0]
+            )
+            yield (0, Error, text)
+            raise StopIteration
 
         out, err = sp.communicate(inp)
         if err:
